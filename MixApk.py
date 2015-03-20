@@ -94,6 +94,7 @@ if args.apks and os.path.isfile(args.apks[0]) and os.path.isfile(args.apks[1]):
 else:
     error("please specify the two apks in args, example : python MixApk.py apk1.apk apk2.apk", None, 2)
 
+
 try:
     print('pass apktool')
     # call(apktool + " d -v -f -o " + apk1Directory + " " + apk1, shell=True)
