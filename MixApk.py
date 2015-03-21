@@ -27,6 +27,8 @@ apk2Manifest = apk2Directory + 'AndroidManifest.xml'
 apk1Smali = apk1Directory + 'smali/'
 apk2Smali = apk2Directory + 'smali/'
 
+apk2Dist = apk2Directory + 'dist/'
+apk2DistApk = apk2Dist + 'apk2.apk'
 
 class ParseArgs:
     def __init__(self):
@@ -42,6 +44,7 @@ class ParseArgs:
 
 class ParseManifest:
     def __init__(self, manifest):
+        ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
         self.file = manifest
         self.manifest = ET.parse(manifest)
         self.root = self.manifest.getroot()
@@ -115,24 +118,29 @@ class EditManifest(ParseManifest):
     def write(self):
         self.manifest.write(self.file)
 
-    def addService(self, node):
+    def addService(self, node, mainpackage):
         if type(node) is list:
-            for service0 in node:
-                change = True
-                for service1 in self.listService():
-                    if service0.get('{http://schemas.android.com/apk/res/android}name') == service1:
-                        change = False
-                if change:
-                    self.application.append(service0)
+            for service in node:
+                service.set('{http://schemas.android.com/apk/res/android}name',
+                            service.get('{http://schemas.android.com/apk/res/android}name').replace(mainpackage, self.findMainPackage()))
+                self.application.append(service)
         else:
-            for service in self.listService():
-                if service == node.get('{http://schemas.android.com/apk/res/android}name'):
-                    return
+            node.set('{http://schemas.android.com/apk/res/android}name',
+                            node.get('{http://schemas.android.com/apk/res/android}name').replace(mainpackage, self.findMainPackage()))
             self.application.append(node)
         self.write()
 
-    def addReceiver(self, node):
-        pass
+    def addReceiver(self, node, mainpackage):
+        if type(node) is list:
+            for receiver in node:
+                receiver.set('{http://schemas.android.com/apk/res/android}name',
+                            receiver.get('{http://schemas.android.com/apk/res/android}name').replace(mainpackage, self.findMainPackage()))
+                self.application.append(receiver)
+        else:
+            node.set('{http://schemas.android.com/apk/res/android}name',
+                            node.get('{http://schemas.android.com/apk/res/android}name').replace(mainpackage, self.findMainPackage()))
+            self.application.append(node)
+        self.write()
 
     def addPermissions(self, node):
         if type(node) is list:
@@ -176,7 +184,6 @@ else:
 
 
 try:
-    print('pass apktool')
     call(apktool + " d -v -f -o " + apk1Directory + " " + apk1, shell=True)
     call(apktool + " d -v -f -o " + apk2Directory + " " + apk2, shell=True)
 except OSError as ex:
@@ -200,6 +207,20 @@ shutil.copytree(apk1Smali + packageToInject.replace('.', '/') + '/',
 for file in glob.glob(apk2Action + '*.smali'):
     sed(file, ParseManifest1.findMainPackage().replace('.', '/'), ParseManifest2.findMainPackage().replace('.', '/'))
 
-
 EditManifest2.addPermissions(ParseManifest1.listNodePermissions())
-EditManifest2.addService(ParseManifest1.listNodeService())
+EditManifest2.addService(ParseManifest1.listNodeService()[0], ParseManifest1.findMainPackage())
+EditManifest2.addReceiver(ParseManifest1.listNodeReceiver(), ParseManifest1.findMainPackage())
+
+try:
+    call(apktool + " b -d -f " + apk2Directory, shell=True)
+except OSError as ex:
+    error("can't build " + apk2Directory , str(ex), 1)
+'''
+try:
+    call('rm ' + apk2Dist + 'app2.apk', shell=True)
+    call('rm ~/.android/debug.keystore', shell=True)
+    call('~/android/sdk/build-tools/21.1.1/zipalign -v 4 ' + apk2DistApk + ' ' + apk2Dist + 'app2.apk', shell=True)
+    call('keytool -genkey -v -keystore ~/.android/debug.keystore -alias sample -keyalg RSA -keysize 2048 -validity 20000', shell=True)
+except OSError as ex:
+    error("can't build " + apk2Directory , str(ex), 1)
+'''
