@@ -9,7 +9,6 @@ import shutil
 import sys
 import glob
 
-
 apktool = "/home/hoodlums/apktool/apktool"
 TempDirectory = '/tmp/MixApk/'
 
@@ -197,9 +196,6 @@ ParseManifest2 = ParseManifest(manifest=apk2Manifest)
 EditManifest1 = EditManifest(manifest=apk1Manifest)
 EditManifest2 = EditManifest(manifest=apk2Manifest)
 
-#shutil.rmtree(apk2Smali + ParseManifest2.findMainPackage().replace('.', '/') + '/' + packageToInject.split('.').pop() + '/')
-
-
 apk1Action = apk1Smali + packageToInject.replace('.', '/') + '/'
 apk2Action = apk2Smali + ParseManifest2.findMainPackage().replace('.', '/') + '/' + packageToInject.split('.').pop() + '/'
 
@@ -228,6 +224,7 @@ try:
     if os.path.exists(os.path.expanduser('~') + '/.android/debug.keystore'):
         os.remove(os.path.expanduser('~') + '/.android/debug.keystore')
     shutil.copyfile(apk2DistApk, apk2Dist + 'app-debug.apk')
+
     call('~/android/sdk/build-tools/21.1.1/zipalign -v 4 app-debug.apk app-debug2.apk', shell=True)
     call('keytool -genkey -v -keystore ~/.android/debug.keystore -alias sample -keyalg RSA -keysize 2048 -validity 20000', shell=True)
     call('jarsigner -verbose -keystore ~/.android/debug.keystore app-debug2.apk sample', shell=True)
