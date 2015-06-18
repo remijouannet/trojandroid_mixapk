@@ -176,6 +176,9 @@ if not os.path.exists(TempDirectory):
 
 args = ParseArgs().getargs()
 
+if not os.path.isfile(apktool):
+    error("apktool isn't install", None, 1)
+
 if args.apks and os.path.isfile(args.apks[0]) and os.path.isfile(args.apks[1]):
     try:
         shutil.copyfile(args.apks[0], apk1)
